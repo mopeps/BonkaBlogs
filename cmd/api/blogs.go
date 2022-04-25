@@ -9,7 +9,18 @@ import (
 )
 
 func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "create a new blog")
+	var input struct {
+		Title string   `json:"title"`
+		Tags  []string `json:"tags"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	fmt.Fprintf(w, "%+v\n", input)
 }
 
 func (app *application) showBlogHandler(w http.ResponseWriter, r *http.Request) {
