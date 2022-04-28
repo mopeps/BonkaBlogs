@@ -1,5 +1,5 @@
 module github.com/mopeps/greenlight
 
-go 1.17
+go 1.18
 
 require github.com/julienschmidt/httprouter v1.3.0

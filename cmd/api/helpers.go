@@ -44,7 +44,7 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	return nil
 }
 
-func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst interface{}) errpr {
+func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	maxBytes := 1_048_576
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 
@@ -54,7 +54,8 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 	err := decoder.Decode(dst)
 	if err != nil {
 		var syntaxError *json.SyntaxError
-		var unmarshallTypeError *json.InvalidUnmarshalError
+		var unmarshallTypeError *json.UnmarshalTypeError
+		var invalidUnmarshallError *json.InvalidUnmarshalError
 
 		switch {
 		case errors.As(err, &syntaxError):
@@ -64,7 +65,7 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 			return errors.New("body contains badly-formed JSON")
 
 		case errors.As(err, &unmarshallTypeError):
-			if unmarshallTypeError.Type.Field != "" {
+			if unmarshallTypeError.Field != "" {
 				return fmt.Errorf("body contains badly-formed JSON type for field %q", unmarshallTypeError.Field)
 			}
 			return fmt.Errorf("body contains badly-formed JSON type (at characer %d)", unmarshallTypeError.Offset)
@@ -79,7 +80,7 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 		case err.Error() == "http: request body too large":
 			return fmt.Errorf("body must not be larger than %d bytes", maxBytes)
 
-		case errors.As(err, &json.InvalidUnmarshalError):
+		case errors.As(err, &invalidUnmarshallError):
 			panic(err)
 
 		default:
