@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mopeps/greenlight/internal/data"
+	"github.com/mopeps/greenlight/internal/validator"
 )
 
 func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request) {
@@ -20,6 +21,18 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	blog := &data.Blog{
+		CreatedAt: time.Now(),
+		Title:     input.Title,
+		Tags:      input.Tags,
+	}
+	v := validator.New()
+
+	if data.ValidateBlog(v, blog); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
 	fmt.Fprintf(w, "%+v\n", input)
 }
 
@@ -29,7 +42,6 @@ func (app *application) showBlogHandler(w http.ResponseWriter, r *http.Request) 
 		app.notFoundResponse(w, r)
 		return
 	}
-
 	blog := data.Blog{
 		ID:        id,
 		CreatedAt: time.Now(),

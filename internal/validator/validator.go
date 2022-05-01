@@ -16,6 +16,10 @@ func New() *Validator {
 	return &Validator{Errors: make(map[string]string)}
 }
 
+func (v *Validator) Valid() bool {
+	return len(v.Errors) == 0
+}
+
 // AddError ,as it name says, it adds an error to a Validator's map
 // ( As long as no entry with the key exists)
 func (v *Validator) AddError(key, message string) {
