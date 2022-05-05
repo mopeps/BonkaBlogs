@@ -24,9 +24,3 @@ func NewModels(db *sql.DB) Models {
 		Blogs: BlogModel{DB: db},
 	}
 }
-
-func NewMockModels(db *sql.DB) Models {
-	return Models{
-		Blogs: MockBlogModel{},
-	}
-}

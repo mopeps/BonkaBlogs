@@ -33,7 +33,18 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	fmt.Fprintf(w, "%+v\n", input)
+	err = app.models.Blogs.Insert(blog)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/blogs/%d", blog.ID))
+
+	err = app.writeJSON(w, http.StatusCreated, envelope{"blog": blog}, headers)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
 
 func (app *application) showBlogHandler(w http.ResponseWriter, r *http.Request) {

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/mopeps/greenlight/internal/validator"
 )
 
@@ -28,7 +29,12 @@ type BlogModel struct {
 }
 
 func (m BlogModel) Insert(blog *Blog) error {
-	return nil
+	query := `
+		INSERT INTO blogs (title, tags)
+		VALUES($1, $2)
+		RETURNING id, created_at, version`
+	args := []interface{}{blog.Title, pq.Array(blog.Tags)}
+	return m.DB.QueryRow(query, args...).Scan(&blog.ID, &blog.CreatedAt, &blog.Version)
 }
 
 func (m BlogModel) Get(id int64) (*Blog, error) {
