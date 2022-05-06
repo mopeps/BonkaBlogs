@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -48,17 +49,22 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) showBlogHandler(w http.ResponseWriter, r *http.Request) {
+
 	id, err := app.readIDParam(r)
+
 	if err != nil {
 		app.notFoundResponse(w, r)
 		return
 	}
-	blog := data.Blog{
-		ID:        id,
-		CreatedAt: time.Now(),
-		Title:     "John Doe's adventure",
-		Tags:      []string{"John", "JOJO", "Doe"},
-		Version:   1,
+	blog, err := app.models.Blogs.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"blog": blog}, nil)
@@ -66,7 +72,6 @@ func (app *application) showBlogHandler(w http.ResponseWriter, r *http.Request) 
 		app.logger.Println(err)
 		app.serverErrorResponse(w, r, err)
 	}
-
 }
 
 func (app *application) indexBlogsHandler(w http.ResponseWriter, r *http.Request) {
