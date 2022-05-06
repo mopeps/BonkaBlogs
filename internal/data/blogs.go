@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/lib/pq"
@@ -38,7 +39,34 @@ func (m BlogModel) Insert(blog *Blog) error {
 }
 
 func (m BlogModel) Get(id int64) (*Blog, error) {
-	return nil, nil
+
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+	query := `
+		SELECT id, created_at, title, tags, version
+		FROM blogs
+		WHERE id = $1`
+
+	var blog Blog
+
+	err := m.DB.QueryRow(query, id).Scan(
+		&blog.ID,
+		&blog.CreatedAt,
+		&blog.Title,
+		pq.Array(&blog.Tags),
+		&blog.Version,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &blog, nil
 }
 func (m BlogModel) Update(blog *Blog) error {
 	return nil
