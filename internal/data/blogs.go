@@ -69,10 +69,39 @@ func (m BlogModel) Get(id int64) (*Blog, error) {
 	return &blog, nil
 }
 func (m BlogModel) Update(blog *Blog) error {
-	return nil
+	query := `UPDATE blogs
+		SET title = $1, tags = $2, version = version + 1
+		WHERE id = $3
+		RETURNING version`
+
+	args := []interface{}{
+		blog.Title,
+		pq.Array(blog.Tags),
+	}
+	return m.DB.QueryRow(query, args...).Scan(&blog.Version)
 }
 
 func (m BlogModel) Delete(id int64) error {
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	query := ` DELETE FROM blogs
+		WHERE id = $1`
+
+	result, err := m.DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
 	return nil
 }
 
