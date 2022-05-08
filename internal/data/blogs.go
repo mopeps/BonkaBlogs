@@ -71,14 +71,25 @@ func (m BlogModel) Get(id int64) (*Blog, error) {
 func (m BlogModel) Update(blog *Blog) error {
 	query := `UPDATE blogs
 		SET title = $1, tags = $2, version = version + 1
-		WHERE id = $3
+		WHERE id = $3 AND version = $4
 		RETURNING version`
 
 	args := []interface{}{
 		blog.Title,
 		pq.Array(blog.Tags),
+		blog.Version,
 	}
-	return m.DB.QueryRow(query, args...).Scan(&blog.Version)
+
+	err := m.DB.QueryRow(query, args...).Scan(&blog.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
+	}
+	return nil
 }
 
 func (m BlogModel) Delete(id int64) error {

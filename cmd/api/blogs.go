@@ -116,13 +116,17 @@ func (app *application) updateBlogsHandler(w http.ResponseWriter, r *http.Reques
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
-	// Pass the updated movie record to our new Update() method.
 	err = app.models.Blog.Update(blog)
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			app.editConflictResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
 		return
 	}
-	// Write the updated movie record in a JSON response.
+
 	err = app.writeJSON(w, http.StatusOK, envelope{"blog": blog}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
