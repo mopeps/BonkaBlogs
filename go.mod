@@ -1,4 +1,4 @@
-module github.com/mopeps/greenlight
+module github.com/mopeps/bonkablogs
 
 go 1.18
 

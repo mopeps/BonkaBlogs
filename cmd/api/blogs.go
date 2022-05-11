@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mopeps/greenlight/internal/data"
-	"github.com/mopeps/greenlight/internal/validator"
+	"github.com/mopeps/bonkablogs/internal/data"
+	"github.com/mopeps/bonkablogs/internal/validator"
 )
 
 func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request) {
@@ -134,6 +134,30 @@ func (app *application) updateBlogsHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (app *application) indexBlogsHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Title string
+		Tags  []string
+		data.Filters
+	}
+
+	v := validator.New()
+
+	qs := r.URL.Query()
+
+	input.Title = app.readString(qs, "title", "")
+	input.Tags = app.readCSV(qs, "tags", []string{})
+
+	input.Filters.Page = app.readInt(qs, "page", 1, v)
+	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
+
+	input.Filters.Sort = app.readString(qs, "sort", "id")
+
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	fmt.Fprintf(w, "%+v\n", input)
 }
 
 func (app *application) deleteBlogHandler(w http.ResponseWriter, r *http.Request) {

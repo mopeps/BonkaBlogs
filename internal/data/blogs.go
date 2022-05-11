@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-	"github.com/mopeps/greenlight/internal/validator"
+	"github.com/mopeps/bonkablogs/internal/validator"
 )
 
 type Blog struct {

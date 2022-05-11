@@ -11,7 +11,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/mopeps/greenlight/internal/data"
+	"github.com/mopeps/bonkablogs/internal/data"
 )
 
 const version = "0.1.0"
