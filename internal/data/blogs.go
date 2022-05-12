@@ -76,6 +76,49 @@ func (m BlogModel) Get(id int64) (*Blog, error) {
 	}
 	return &blog, nil
 }
+
+func (m BlogModel) GetAll(title string, tags []string, filters Filters) ([]*Blog, error) {
+
+	query := `
+		SELECT id, created_at, title, tags, version
+		FROM blogs
+		ORDER BY id`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryRowContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	blogs := []*Blog{}
+
+	for rows.Next() {
+		var blog Blog
+		err = rows.Scan(
+			&blog.ID,
+			&blog.CreatedAt,
+			&blog.Title,
+			pq.Array(&blog.Tags),
+			&blog.Version,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		blogs = append(blogs, blog)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return blogs, nil
+}
 func (m BlogModel) Update(blog *Blog) error {
 	query := `UPDATE blogs
 		SET title = $1, tags = $2, version = version + 1

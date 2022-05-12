@@ -151,13 +151,22 @@ func (app *application) indexBlogsHandler(w http.ResponseWriter, r *http.Request
 	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
 
 	input.Filters.Sort = app.readString(qs, "sort", "id")
+	input.Filters.SortSafelist = []string{"id", "title", "-id", "-title"}
 
-	if !v.Valid() {
+	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
+	blogs, err := app.models.Blogs.GetAll(input.Title, input.Tags, input.Filters)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
 
-	fmt.Fprintf(w, "%+v\n", input)
+	err = app.writeJSON(w, http.StatusOk, envelope{"blogs": blogs}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
 
 func (app *application) deleteBlogHandler(w http.ResponseWriter, r *http.Request) {
